@@ -1,0 +1,31 @@
+name: Run Rust release workflow
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [ main ]
+
+env: 
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust-merge-flow:
+    if: github.event.pull_request.merged == true
+    name: Rust build debug and release builds
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        toolchain:
+          - stable
+        BUILD_TARGET: [dev, release]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Build Rust project binaries in "${{ matrix.BUILD_TARGET }}" mode
+        run: cargo build --profile ${{ matrix.BUILD_TARGET }}
