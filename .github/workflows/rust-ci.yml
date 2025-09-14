@@ -1,0 +1,37 @@
+name: Run Rust CI Checks
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths: [ src/**/*.rs ]
+    types: [opened, synchronize]
+
+env: 
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust-pr-flow:
+    name: Rust Lint, Build, and Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        toolchain:
+          - stable
+        BUILD_TARGET: [dev]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Run fmt check
+        run: cargo fmt --all -- --check
+      - name: Run clippy
+        run: cargo clippy -- -Dwarnings
+      - name: Build Rust project binaries in "${{ matrix.BUILD_TARGET }}" mode
+        run: cargo build --profile ${{ matrix.BUILD_TARGET }}
+      - name: Run tests
+        run: cargo test --profile ${{ matrix.BUILD_TARGET }}
